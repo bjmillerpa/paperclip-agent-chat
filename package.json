@@ -1,0 +1,28 @@
+{
+  "name": "paperclip-agent-chat",
+  "version": "0.2.0",
+  "description": "Full-page chat plugin for Paperclip — have informal conversations with your AI agents",
+  "type": "module",
+  "license": "MIT",
+  "author": "BJ Software",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bjmillerpa/paperclip-agent-chat"
+  },
+  "paperclipPlugin": {
+    "manifest": "./dist/manifest.js",
+    "worker": "./dist/worker.js",
+    "ui": "./dist/ui/"
+  },
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "peerDependencies": {
+    "@paperclipai/plugin-sdk": ">=0.1.0"
+  },
+  "devDependencies": {
+    "@paperclipai/plugin-sdk": "file:/app/packages/plugins/sdk",
+    "esbuild": "^0.25.12",
+    "react": "^19.0.0"
+  }
+}
