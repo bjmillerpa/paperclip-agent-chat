@@ -6,9 +6,16 @@ const STATE_KEY = "history";
 const MAX_HISTORY_MESSAGES = 100;
 
 // Chat context files are written here so agents can read them.
-// Override with AGENT_CHAT_DIR env var if the default doesn't suit your setup.
-const AGENT_CHAT_DIR = process.env.AGENT_CHAT_DIR
-  || (process.env.HOME ? `${process.env.HOME}/.agent-chat` : "/tmp/.agent-chat");
+// AGENT_CHAT_DIR must be set in your Paperclip container's environment.
+// The plugin worker sandbox may not have $HOME set, so we require an explicit path.
+if (!process.env.AGENT_CHAT_DIR) {
+  throw new Error(
+    "AGENT_CHAT_DIR environment variable is required. " +
+    "Set it in your Paperclip container's environment to a path accessible by both " +
+    "the plugin worker and your agents (e.g. /home/youruser/.agent-chat)."
+  );
+}
+const AGENT_CHAT_DIR = process.env.AGENT_CHAT_DIR;
 
 /**
  * Agent Chat Plugin Worker
@@ -128,16 +135,21 @@ async function processAgentResponse(ctx, agentId, companyId, message, history) {
   const chatFilePath = `${AGENT_CHAT_DIR}/${agentId}.md`;
   let sessionId = null;
 
+  ctx.logger.info("processAgentResponse starting", { agentId, chatFilePath });
+
   try {
     // Write conversation context file for the agent
     await mkdir(AGENT_CHAT_DIR, { recursive: true });
-    await writeFile(chatFilePath, buildChatFile(history, message), "utf8");
+    const content = buildChatFile(history, message);
+    await writeFile(chatFilePath, content, "utf8");
+    ctx.logger.info("Chat file written", { chatFilePath, contentLength: content.length });
 
     // Create session and send message
     const session = await ctx.agents.sessions.create(agentId, companyId, {
       reason: "Agent Chat",
     });
     sessionId = session.sessionId;
+    ctx.logger.info("Session created, sending message", { sessionId });
 
     let resolveDone, rejectDone;
     const donePromise = new Promise((resolve, reject) => {
