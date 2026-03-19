@@ -6,16 +6,8 @@ const STATE_KEY = "history";
 const MAX_HISTORY_MESSAGES = 100;
 
 // Chat context files are written here so agents can read them.
-// AGENT_CHAT_DIR must be set in your Paperclip container's environment.
-// The plugin worker sandbox may not have $HOME set, so we require an explicit path.
-if (!process.env.AGENT_CHAT_DIR) {
-  throw new Error(
-    "AGENT_CHAT_DIR environment variable is required. " +
-    "Set it in your Paperclip container's environment to a path accessible by both " +
-    "the plugin worker and your agents (e.g. /home/youruser/.agent-chat)."
-  );
-}
-const AGENT_CHAT_DIR = process.env.AGENT_CHAT_DIR;
+// Set AGENT_CHAT_DIR in your environment, or edit this fallback path.
+const AGENT_CHAT_DIR = process.env.AGENT_CHAT_DIR || "/home/bjmillerpa/.agent-chat";
 
 /**
  * Agent Chat Plugin Worker
