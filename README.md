@@ -94,18 +94,18 @@ That's it. The agent will now respond to chat messages using its full capabiliti
 
 ## Configuration
 
-### Chat Directory (Required)
+### Chat Directory
 
-The plugin writes conversation context files so agents can read them. You **must** set `AGENT_CHAT_DIR` in your Paperclip container's environment:
+The plugin writes conversation context files so agents can read them. The default path is hardcoded in `src/worker.js` — **edit it to match your setup** before building:
 
-```bash
-# In your Paperclip container's environment (docker-compose.yml, .env, etc.):
-AGENT_CHAT_DIR=/home/youruser/.agent-chat
+```javascript
+// In src/worker.js:
+const AGENT_CHAT_DIR = process.env.AGENT_CHAT_DIR || "/home/youruser/.agent-chat";
 ```
 
-The plugin will refuse to start without this variable. This is intentional — the plugin worker sandbox may not have `$HOME` set, so a silent fallback would write files to the wrong location and agents wouldn't find them.
+**Important:** Plugin workers run as child processes that may not inherit container environment variables. If `AGENT_CHAT_DIR` isn't available at runtime, the hardcoded fallback is used. Make sure the fallback path is correct for your environment.
 
-The directory must be readable by both the plugin worker (inside the Paperclip process) and the agent processes. It will be created automatically on first use.
+The directory must be readable by both the plugin worker and your agent processes. It will be created automatically on first use.
 
 ### History Limit
 
