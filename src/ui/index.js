@@ -11,6 +11,13 @@ import {
   usePluginData,
   usePluginAction,
 } from "@paperclipai/plugin-sdk/ui";
+import { marked } from "marked";
+
+// Configure marked for safe, clean output
+marked.setOptions({
+  breaks: true,       // GFM line breaks
+  gfm: true,          // GitHub-flavored markdown
+});
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -282,6 +289,63 @@ const STYLES = `
   padding-left: 4px;
 }
 
+/* Rendered markdown inside agent bubbles */
+.ac-bubble p { margin: 0 0 0.5em; }
+.ac-bubble p:last-child { margin-bottom: 0; }
+.ac-bubble h1, .ac-bubble h2, .ac-bubble h3, .ac-bubble h4 {
+  margin: 0.6em 0 0.3em;
+  font-size: 1em;
+  font-weight: 600;
+}
+.ac-bubble h1 { font-size: 1.15em; }
+.ac-bubble h2 { font-size: 1.08em; }
+.ac-bubble ul, .ac-bubble ol {
+  margin: 0.3em 0;
+  padding-left: 1.4em;
+}
+.ac-bubble li { margin: 0.15em 0; }
+.ac-bubble code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+.ac-bubble pre {
+  background: rgba(0,0,0,0.06);
+  padding: 8px 10px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.4em 0;
+}
+.ac-bubble pre code {
+  background: none;
+  padding: 0;
+}
+.ac-bubble blockquote {
+  border-left: 3px solid var(--color-border, #d1d5db);
+  margin: 0.4em 0;
+  padding: 2px 10px;
+  color: var(--color-text-subtle, #6b7280);
+}
+.ac-bubble table {
+  border-collapse: collapse;
+  margin: 0.4em 0;
+  font-size: 0.92em;
+}
+.ac-bubble th, .ac-bubble td {
+  border: 1px solid var(--color-border, #d1d5db);
+  padding: 4px 8px;
+  text-align: left;
+}
+.ac-bubble th { font-weight: 600; background: rgba(0,0,0,0.03); }
+.ac-bubble a { color: var(--color-primary, #3b82f6); text-decoration: underline; }
+.ac-msg.user .ac-bubble code { background: rgba(255,255,255,0.15); }
+.ac-msg.user .ac-bubble pre { background: rgba(255,255,255,0.1); }
+.ac-msg.user .ac-bubble a { color: #fff; }
+.ac-msg.user .ac-bubble blockquote { border-left-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.8); }
+.ac-msg.user .ac-bubble th, .ac-msg.user .ac-bubble td { border-color: rgba(255,255,255,0.3); }
+.ac-msg.user .ac-bubble th { background: rgba(255,255,255,0.1); }
+
 /* No agent selected */
 .ac-no-agent {
   flex: 1;
@@ -323,11 +387,20 @@ function formatTime(ts) {
 // ---------------------------------------------------------------------------
 // Message Bubble
 // ---------------------------------------------------------------------------
+function renderMarkdown(text) {
+  try { return marked.parse(text); }
+  catch { return text; }
+}
+
 function MessageBubble({ msg, agentName }) {
   const roleClass = msg.role === "user" ? "user" : msg.role === "error" ? "error" : "agent";
   const label = msg.role === "user" ? "You" : msg.role === "error" ? "Error" : (agentName || "Agent");
+  // Render markdown for agent/error messages; keep user messages as plain text
+  const bubble = msg.role === "user"
+    ? h("div", { className: "ac-bubble" }, msg.text)
+    : h("div", { className: "ac-bubble", dangerouslySetInnerHTML: { __html: renderMarkdown(msg.text) } });
   return h("div", { className: `ac-msg ${roleClass}` },
-    h("div", { className: "ac-bubble" }, msg.text),
+    bubble,
     h("div", { className: "ac-msg-meta" }, `${label} \u00b7 ${formatTime(msg.timestamp)}`)
   );
 }

@@ -1,6 +1,6 @@
 {
   "name": "paperclip-agent-chat",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Full-page chat plugin for Paperclip — have informal conversations with your AI agents",
   "type": "module",
   "license": "MIT",
@@ -23,6 +23,7 @@
   "devDependencies": {
     "@paperclipai/plugin-sdk": "file:/app/packages/plugins/sdk",
     "esbuild": "^0.25.12",
+    "marked": "^17.0.0",
     "react": "^19.0.0"
   }
 }
