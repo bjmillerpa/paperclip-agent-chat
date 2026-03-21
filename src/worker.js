@@ -155,7 +155,16 @@ async function processAgentResponse(ctx, agentId, companyId, message, history) {
       prompt: message,
       reason: "Agent Chat",
       onEvent: (event) => {
+        ctx.logger.info("Agent chat event", {
+          eventType: event.eventType,
+          stream: event.stream,
+          hasMessage: !!event.message,
+          messageLen: (event.message ?? "").length,
+        });
         if (event.eventType === "chunk" && event.stream === "stdout") {
+          stdoutBuffer += event.message ?? "";
+        } else if (event.eventType === "chunk" && event.stream !== "stdout") {
+          // Capture chunks from any stream, not just stdout
           stdoutBuffer += event.message ?? "";
         } else if (event.eventType === "done") {
           resolveDone();
@@ -167,8 +176,14 @@ async function processAgentResponse(ctx, agentId, companyId, message, history) {
 
     await donePromise;
 
-    // Parse JSONL for the clean result text
+    ctx.logger.info("Agent chat done, parsing response", {
+      stdoutBufferLen: stdoutBuffer.length,
+    });
+
+    // Try multiple parsing strategies
     let responseText = "";
+
+    // Strategy 1: Look for JSONL with type:"result" (structured adapters)
     for (const line of stdoutBuffer.split("\n")) {
       const trimmed = line.trim();
       if (!trimmed) continue;
@@ -178,10 +193,59 @@ async function processAgentResponse(ctx, agentId, companyId, message, history) {
           responseText = obj.result;
           break;
         }
-      } catch {
-        // not JSON — skip
+      } catch { /* not JSON */ }
+    }
+
+    // Strategy 2: Look for opencode-style content blocks in JSON events
+    if (!responseText) {
+      const contentParts = [];
+      for (const line of stdoutBuffer.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith("{")) continue;
+        try {
+          const obj = JSON.parse(trimmed);
+          // opencode emits content in various fields
+          if (obj.type === "content" && obj.content) contentParts.push(obj.content);
+          else if (obj.type === "text" && obj.text) contentParts.push(obj.text);
+          else if (obj.type === "delta" && obj.delta) contentParts.push(obj.delta);
+          else if (obj.type === "message" && obj.content) contentParts.push(obj.content);
+          else if (obj.type === "assistant" && obj.content) contentParts.push(obj.content);
+          else if (obj.part && obj.part.content) contentParts.push(obj.part.content);
+          else if (obj.part && obj.part.text) contentParts.push(obj.part.text);
+          // step_end often contains the final result
+          else if (obj.type === "step_end" && obj.part && obj.part.content) contentParts.push(obj.part.content);
+        } catch { /* not JSON */ }
+      }
+      if (contentParts.length > 0) {
+        responseText = contentParts.join("");
       }
     }
+
+    // Strategy 3: Strip system messages and use remaining text
+    if (!responseText) {
+      const lines = stdoutBuffer.split("\n");
+      const contentLines = lines.filter(l => {
+        const t = l.trim();
+        return t &&
+          !t.startsWith("run started") &&
+          !t.startsWith("[paperclip]") &&
+          !t.startsWith("adapter invocation") &&
+          !t.startsWith("{");
+      });
+      if (contentLines.length > 0) {
+        responseText = contentLines.join("\n").trim();
+      }
+    }
+
+    // Strategy 4: Raw fallback
+    if (!responseText && stdoutBuffer.trim()) {
+      responseText = stdoutBuffer.trim();
+    }
+
+    ctx.logger.info("Agent chat response parsed", {
+      responseLen: responseText.length,
+      responsePreview: responseText.substring(0, 200),
+    });
 
     history.push({
       role: "agent",
