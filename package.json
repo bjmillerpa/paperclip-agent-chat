@@ -21,7 +21,7 @@
     "@paperclipai/plugin-sdk": ">=0.1.0"
   },
   "devDependencies": {
-    "@paperclipai/plugin-sdk": "file:/app/packages/plugins/sdk",
+    "@paperclipai/plugin-sdk": "^2026.318.0",
     "esbuild": "^0.25.12",
     "marked": "^17.0.0",
     "react": "^19.0.0"

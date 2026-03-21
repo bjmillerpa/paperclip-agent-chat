@@ -40,7 +40,7 @@ const STYLES = `
   border-right: 1px solid var(--color-border, #e5e7eb);
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-subtle, #fafafa);
+  background: var(--color-bg-subtle, var(--color-bg-secondary, #fafafa));
   flex-shrink: 0;
 }
 .ac-sidebar-header {
@@ -258,13 +258,14 @@ const STYLES = `
   font-family: inherit;
   font-size: 14px;
   line-height: 1.45;
-  background: var(--color-bg, #fff);
-  color: inherit;
+  background: var(--color-bg, var(--color-bg-subtle, #fff));
+  color: var(--color-text, inherit);
   outline: none;
   box-sizing: border-box;
   min-height: 48px;
   max-height: 200px;
 }
+.ac-textarea::placeholder { color: var(--color-text-subtle, #9ca3af); }
 .ac-textarea:focus { border-color: var(--color-primary, #3b82f6); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
 .ac-textarea:disabled { opacity: 0.6; cursor: not-allowed; }
 .ac-send-btn {
@@ -358,6 +359,23 @@ const STYLES = `
   font-size: 15px;
 }
 .ac-no-agent-icon { font-size: 40px; opacity: 0.3; }
+
+/* Dark mode overrides — Paperclip may not set all CSS variables */
+@media (prefers-color-scheme: dark) {
+  .ac-sidebar { background: var(--color-bg-subtle, #1e1e2e); }
+  .ac-textarea { background: var(--color-bg, #1e1e2e); color: var(--color-text, #e0e0e0); border-color: var(--color-border, #3a3a4a); }
+  .ac-textarea::placeholder { color: var(--color-text-subtle, #888); }
+  .ac-agent-btn { color: var(--color-text, #e0e0e0); }
+  .ac-agent-btn:hover { background: var(--color-bg-hover, rgba(255,255,255,0.06)); }
+  .ac-agent-title { color: var(--color-text-subtle, #888); }
+  .ac-msg.agent .ac-bubble { background: var(--color-bg-secondary, #2a2a3a); color: var(--color-text, #e0e0e0); }
+  .ac-typing { background: var(--color-bg-secondary, #2a2a3a); }
+  .ac-bubble code { background: rgba(255,255,255,0.08); }
+  .ac-bubble pre { background: rgba(255,255,255,0.08); }
+  .ac-bubble th { background: rgba(255,255,255,0.05); }
+  .ac-bubble th, .ac-bubble td { border-color: var(--color-border, #3a3a4a); }
+  .ac-bubble blockquote { border-left-color: var(--color-border, #3a3a4a); }
+}
 `;
 
 let stylesInjected = false;
