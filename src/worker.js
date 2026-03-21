@@ -7,7 +7,7 @@ const MAX_HISTORY_MESSAGES = 100;
 
 // Chat context files are written here so agents can read them.
 // Set AGENT_CHAT_DIR in your environment, or edit this fallback path.
-const AGENT_CHAT_DIR = process.env.AGENT_CHAT_DIR || "/home/bjmillerpa/.agent-chat";
+const AGENT_CHAT_DIR = process.env.AGENT_CHAT_DIR || "/Users/robi/.paperclip/agent-chat";
 
 /**
  * Agent Chat Plugin Worker
